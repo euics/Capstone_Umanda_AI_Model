@@ -24,7 +24,7 @@ def get_country_data():
     if country_name == 'Spain':
         excel_file = '스페인(test).xlsx'
     elif country_name == 'Italy':
-        excel_file = 'Italy(test).xlsx'
+        excel_file = '이탈리아(test).xlsx'
     elif country_name == 'British':
         excel_file = 'British.xlsx'
     else:
