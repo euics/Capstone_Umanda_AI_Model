@@ -37,11 +37,11 @@ def get_country_data():
     np.random.seed(seed)
 
     rating = pd.read_excel(excel_file)
-    rating_with_category = rating[['user', 'attraction', 'rating', 'feature']]
+    rating_with_category = rating[['user', 'attraction', 'rating', 'feature', 'latitude', 'longitude']]
     user_item_matrix = rating_with_category.pivot_table("rating", "user", "attraction").fillna(0)
     categories = pd.get_dummies(rating_with_category['feature'], prefix='feature')
 
-    knn = KNNModel(user_item_matrix)
+    knn = KNNModel(user_item_matrix, rating_with_category)
 
     user_id = 1000
     user_id += 1
@@ -50,16 +50,11 @@ def get_country_data():
 
     knn_recommendations = knn.recommend(user_id, num_days, new_user_ratings=new_user_ratings)
 
-    # 결과를 담을 빈 리스트를 생성합니다.
     recommendations = []
 
-    # Replace the following loop
-    # for attraction, prediction in knn_recommendations:
-    # with the following loop
-    for attraction in knn_recommendations:
-        recommendations.append(attraction)
+    for attraction, latitude, longitude in knn_recommendations:
+        recommendations.append({"name": attraction, "latitude": latitude, "longitude": longitude})
 
-    # Return the recommendations wrapped in a JSON object with the key 'attractions'
     return jsonify({"attractions": recommendations})
 
 
@@ -74,8 +69,9 @@ def add_new_user_ratings(user_item_matrix, new_user_ratings):
 
 
 class KNNModel:
-    def __init__(self, user_item_matrix, k=8):
+    def __init__(self, user_item_matrix, rating_with_category, k=8):
         self.user_item_matrix = user_item_matrix
+        self.rating_with_category = rating_with_category
         self.k = k
         self.model = NearestNeighbors(metric='cosine', algorithm='brute', n_neighbors=self.k + 1)
         self.model.fit(user_item_matrix)
@@ -100,8 +96,11 @@ class KNNModel:
         top_n = num_days * 4
         recommended_attractions = mean_ratings.nlargest(top_n).index.tolist()
 
-        return recommended_attractions[:top_n]
+        # 위도와 경도 값을 찾기 위해 데이터프레임으로 변경
+        attraction_location = self.rating_with_category[['attraction', 'latitude', 'longitude']].drop_duplicates()
+        recommended_locations = attraction_location[attraction_location['attraction'].isin(recommended_attractions)]
 
+        return list(zip(recommended_attractions[:top_n], recommended_locations['latitude'], recommended_locations['longitude']))
 
 def get_user_input(user_id, attraction_names):
     user_ratings = []
