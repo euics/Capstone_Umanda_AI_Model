@@ -23,11 +23,11 @@ def get_country_data():
     num_days = data.get('days')
 
     if country_name == 'Spain':
-        excel_file = '스페인(test).xlsx'
+        excel_file = '../스페인(test).xlsx'
     elif country_name == 'Italy':
-        excel_file = '이탈리아(test).xlsx'
+        excel_file = '../이탈리아(test).xlsx'
     elif country_name == 'British':
-        excel_file = 'British.xlsx'
+        excel_file = '../British.xlsx'
     else:
         error_message = {"message": "Country not supported."}
         return jsonify(error_message), 400
@@ -99,6 +99,7 @@ class KNNModel:
         recommended_locations = attraction_location[attraction_location['attraction'].isin(recommended_attractions)]
 
         return list(zip(recommended_attractions[:top_n], recommended_locations['latitude'], recommended_locations['longitude']))
+
 
 def get_user_input(user_id, attraction_names):
     user_ratings = []
