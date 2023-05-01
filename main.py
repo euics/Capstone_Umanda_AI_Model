@@ -17,6 +17,7 @@ np.random.seed(seed)
 @app.route('/country', methods=['POST'])
 def get_country_data():
     data = request.get_json()
+    user_id = data.get('id')
     country_name = data.get('country_name')
     attraction_names = data.get('attractions')
     num_days = data.get('days')
@@ -42,9 +43,6 @@ def get_country_data():
     categories = pd.get_dummies(rating_with_category['feature'], prefix='feature')
 
     knn = KNNModel(user_item_matrix, rating_with_category)
-
-    user_id = 1000
-    user_id += 1
 
     new_user_ratings = get_user_input(user_id, attraction_names)
 
