@@ -1,13 +1,7 @@
-FROM python:3.8-slim
+FROM ubuntu:latest
 
-# Install required system dependencies
-RUN apt-get update && apt-get install -y \
-    build-essential \
-    libblas-dev \
-    liblapack-dev \
-    libatlas-base-dev \
-    gfortran \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update -y
+RUN apt-get install -y python-pip python-dev build-essential
 
 WORKDIR /code
 
