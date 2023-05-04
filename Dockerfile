@@ -9,4 +9,6 @@ RUN python3 -m venv venv && \
 
 COPY src/main.py .
 
+EXPOSE 5000
+
 CMD ["./venv/bin/python", "./main.py"]
