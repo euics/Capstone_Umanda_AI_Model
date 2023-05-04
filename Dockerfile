@@ -5,7 +5,7 @@ FROM python:3.8-slim
 WORKDIR /app
 
 # Copy the current directory contents into the container at /app
-COPY requirements.txt ./
+COPY requirements.txt .
 
 # Install any needed packages specified in requirements.txt
 RUN python3 -m venv venv && \
@@ -20,4 +20,4 @@ COPY src/data ./data
 EXPOSE 5000
 
 # Run main.py when the container launches
-CMD ["python3", "./main.py"]
+CMD ["./venv/bin/python", "./main.py"]
