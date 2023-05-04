@@ -23,11 +23,11 @@ def get_country_data():
     num_days = data.get('days')
 
     if country_name == 'Spain':
-        excel_file = '../스페인(test).xlsx'
+        excel_file = './data/스페인(test).xlsx'
     elif country_name == 'Italy':
-        excel_file = '../이탈리아(test).xlsx'
+        excel_file = './data/이탈리아(test).xlsx'
     elif country_name == 'British':
-        excel_file = '../British.xlsx'
+        excel_file = './data/British.xlsx'
     else:
         error_message = {"message": "Country not supported."}
         return jsonify(error_message), 400
