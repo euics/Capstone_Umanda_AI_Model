@@ -1,11 +1,11 @@
-pandas>=0.19
+pandas
 
-numpy>=1.9.2
+numpy
 
-torch==1.12.0
+torch
 
-scikit-learn>=0.18
+scikit-learn
 
-Flask==1.1.2
+Flask
 
-Jinja2>=2.10.1
+Jinja2
