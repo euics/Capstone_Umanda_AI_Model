@@ -11,6 +11,6 @@ RUN python3 -m pip install --upgrade pip
 # Install Python dependencies from requirements.txt
 RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
-WORKDIR /app
+WORKDIR /src
 COPY main.py .
 CMD ["python3", "./main.py"]
