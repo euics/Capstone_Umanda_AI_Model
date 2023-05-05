@@ -5,13 +5,27 @@ import random
 from sklearn.neighbors import NearestNeighbors
 
 from flask import Flask, request, jsonify, abort
+from flask_sqlalchemy import SQLAlchemy
+
+# import os
 
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///recommendations.db'
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+db = SQLAlchemy(app)
 
 seed = 777
 torch.manual_seed(seed)
 random.seed(seed)
 np.random.seed(seed)
+
+
+class AttractionRecommendation(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    attraction_name = db.Column(db.String(100), nullable=False)
+    latitude = db.Column(db.String(50), nullable=False)
+    longitude = db.Column(db.String(50), nullable=False)
 
 
 @app.route('/country', methods=['POST'])
@@ -22,38 +36,72 @@ def get_country_data():
     attraction_names = data.get('attractions')
     num_days = data.get('days')
 
-    if country_name == 'Spain':
-        excel_file = './data/스페인(test).xlsx'
-    elif country_name == 'Italy':
-        excel_file = './data/이탈리아(test).xlsx'
-    elif country_name == 'British':
-        excel_file = './data/British.xlsx'
+    # data_directory = os.path.join(os.path.dirname(__file__), 'data')
+
+    recommendations = AttractionRecommendation.query.filter_by(user_id=user_id).all()
+
+    print(recommendations)
+
+    if not recommendations:
+        if country_name == 'Spain':
+            excel_file = './data/스페인(test).xlsx'
+        elif country_name == 'Italy':
+            excel_file = './data/이탈리아(test).xlsx'
+        elif country_name == 'British':
+            # excel_file = os.path.join(data_directory, 'British.xlsx')
+            excel_file = './data/British.xlsx'
+        else:
+            error_message = {"message": "Country not supported."}
+            return jsonify(error_message), 400
+
+        seed = 777
+        torch.manual_seed(seed)
+        random.seed(seed)
+        np.random.seed(seed)
+
+        rating = pd.read_excel(excel_file)
+        rating_with_category = rating[['user', 'attraction', 'rating', 'feature', 'latitude', 'longitude']]
+        user_item_matrix = rating_with_category.pivot_table("rating", "user", "attraction").fillna(0)
+        categories = pd.get_dummies(rating_with_category['feature'], prefix='feature')
+
+        knn = KNNModel(user_item_matrix, rating_with_category)
+
+        new_user_ratings = get_user_input(user_id, attraction_names)
+
+        knn_recommendations = knn.recommend(user_id, num_days, new_user_ratings=new_user_ratings)
+
+        recommendations = []
+
+        for attraction, latitude, longitude in knn_recommendations:
+            recommendations.append({"name": attraction, "latitude": latitude, "longitude": longitude})
+
+        # Save recommendations to database
+        save_recommendations(user_id, recommendations)
+
+        return jsonify({"attractions": recommendations})
+
     else:
-        error_message = {"message": "Country not supported."}
-        return jsonify(error_message), 400
+        recommendation_list = []
+        for recommendation in recommendations:
+            recommendation_list.append({
+                'name': recommendation.attraction_name,
+                'latitude': recommendation.latitude,
+                'longitude': recommendation.longitude
+            })
 
-    seed = 777
-    torch.manual_seed(seed)
-    random.seed(seed)
-    np.random.seed(seed)
+        return jsonify(recommendation_list)
 
-    rating = pd.read_excel(excel_file)
-    rating_with_category = rating[['user', 'attraction', 'rating', 'feature', 'latitude', 'longitude']]
-    user_item_matrix = rating_with_category.pivot_table("rating", "user", "attraction").fillna(0)
-    categories = pd.get_dummies(rating_with_category['feature'], prefix='feature')
 
-    knn = KNNModel(user_item_matrix, rating_with_category)
-
-    new_user_ratings = get_user_input(user_id, attraction_names)
-
-    knn_recommendations = knn.recommend(user_id, num_days, new_user_ratings=new_user_ratings)
-
-    recommendations = []
-
-    for attraction, latitude, longitude in knn_recommendations:
-        recommendations.append({"name": attraction, "latitude": latitude, "longitude": longitude})
-
-    return jsonify({"attractions": recommendations})
+def save_recommendations(user_id, recommendations):
+    for recommendation in recommendations:
+        attraction_recommendation = AttractionRecommendation(
+            user_id=user_id,
+            attraction_name=recommendation['name'],
+            latitude=recommendation['latitude'],
+            longitude=recommendation['longitude']
+        )
+        db.session.add(attraction_recommendation)
+    db.session.commit()
 
 
 # Create a class for KNN model
@@ -109,4 +157,6 @@ def get_user_input(user_id, attraction_names):
 
 
 if __name__ == "__main__":
-    app.run(host="0.0.0.0", port=5000)
+    with app.app_context():
+        db.create_all()
+        app.run(host="0.0.0.0", port=5000)
