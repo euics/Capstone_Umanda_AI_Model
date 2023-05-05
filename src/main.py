@@ -18,7 +18,7 @@ np.random.seed(seed)
 def get_country_data():
     data = request.get_json()
     user_id = data.get('id')
-    country_name = data.get('country_name')
+    country_name = data.get('countryName')
     attraction_names = data.get('attractions')
     num_days = data.get('days')
 
