@@ -40,8 +40,6 @@ def get_country_data():
 
     recommendations = AttractionRecommendation.query.filter_by(user_id=user_id).all()
 
-    print(recommendations)
-
     if not recommendations:
         if country_name == 'Spain':
             excel_file = './data/스페인(test).xlsx'
