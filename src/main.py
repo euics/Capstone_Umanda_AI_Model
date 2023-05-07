@@ -96,7 +96,7 @@ def get_country_data():
 def get_category_data():
     data = request.get_json()
     country_name = data.get('countryName')
-    feature = data.get('feature')
+    features = data.get('features')  # Change 'feature' to 'features'
 
     # data_directory = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -111,21 +111,25 @@ def get_category_data():
         error_message = {"message": "Country not supported."}
         return jsonify(error_message), 400
 
-    attractions_by_feature = get_attractions_by_feature(feature, excel_file)
-
-    # Check if the feature exists in the excel file
-    if attractions_by_feature.empty:
-        error_message = {"message": f"Feature '{feature}' not found."}
-        return jsonify(error_message), 400
-
     result = []
+    for feature in features:  # Iterate through the list of features
+        attractions_by_feature = get_attractions_by_feature(feature, excel_file)
 
-    for index, row in attractions_by_feature.iterrows():
-        result.append({
-            "attraction": row['attraction'],
-            "feature": row['feature'],
-            "URI": row['URI']
-        })
+        # Check if the feature exists in the excel file
+        if attractions_by_feature.empty:
+            continue  # Skip to the next feature if the current one is not found
+
+        for index, row in attractions_by_feature.iterrows():
+            result.append({
+                "attraction": row['attraction'],
+                "feature": row['feature'],
+                "URI": row['URI']
+            })
+
+    # Return an error message if no features are found
+    if not result:
+        error_message = {"message": f"No attractions found for the given features."}
+        return jsonify(error_message), 400
 
     return jsonify({"result": result})
 
