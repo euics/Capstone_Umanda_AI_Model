@@ -8,7 +8,7 @@ from flask import Flask, request, jsonify, abort
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
 
-# import os
+import os
 
 app = Flask(__name__)
 CORS(app)
@@ -90,6 +90,50 @@ def get_country_data():
             })
 
         return jsonify(recommendation_list)
+
+
+@app.route('/getURI', methods=['POST'])
+def get_category_data():
+    data = request.get_json()
+    country_name = data.get('countryName')
+    feature = data.get('feature')
+
+    # data_directory = os.path.join(os.path.dirname(__file__), 'data')
+
+    if country_name == 'Spain':
+        excel_file = './data/스페인(test).xlsx'
+    elif country_name == 'Italy':
+        excel_file = './data/이탈리아(test).xlsx'
+    elif country_name == 'British':
+        # excel_file = os.path.join(data_directory, 'British_Category.xlsx')
+        excel_file = './data/British_Category.xlsx'
+    else:
+        error_message = {"message": "Country not supported."}
+        return jsonify(error_message), 400
+
+    attractions_by_feature = get_attractions_by_feature(feature, excel_file)
+
+    # Check if the feature exists in the excel file
+    if attractions_by_feature.empty:
+        error_message = {"message": f"Feature '{feature}' not found."}
+        return jsonify(error_message), 400
+
+    result = []
+
+    for index, row in attractions_by_feature.iterrows():
+        result.append({
+            "attraction": row['attraction'],
+            "feature": row['feature'],
+            "URI": row['URI']
+        })
+
+    return jsonify({"result": result})
+
+
+def get_attractions_by_feature(feature, excel_file):
+    data = pd.read_excel(excel_file)
+    filtered_data = data[data['feature'] == feature]
+    return filtered_data[['attraction', 'feature', 'URI']]
 
 
 def save_recommendations(user_id, recommendations):
