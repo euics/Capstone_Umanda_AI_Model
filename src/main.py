@@ -35,8 +35,8 @@ def get_country_data():
     data = request.get_json()
     user_id = data.get('id')
     country_name = data.get('countryName')
-    attraction_names = data.get('attractions')
     num_days = data.get('days')
+    attraction_names = data.get('spot')
 
     # data_directory = os.path.join(os.path.dirname(__file__), 'data')
 
@@ -45,11 +45,14 @@ def get_country_data():
     if not recommendations:
         if country_name == 'Spain':
             excel_file = './data/스페인(test).xlsx'
+
         elif country_name == 'Italy':
             excel_file = './data/이탈리아(test).xlsx'
+
         elif country_name == 'British':
             # excel_file = os.path.join(data_directory, 'British.xlsx')
             excel_file = './data/British.xlsx'
+
         else:
             error_message = {"message": "Country not supported."}
             return jsonify(error_message), 400
@@ -73,18 +76,18 @@ def get_country_data():
         recommendations = []
 
         for attraction, latitude, longitude in knn_recommendations:
-            recommendations.append({"name": attraction, "latitude": latitude, "longitude": longitude})
+            recommendations.append({"spot": attraction, "latitude": latitude, "longitude": longitude})
 
         # Save recommendations to database
         save_recommendations(user_id, recommendations)
 
-        return jsonify({"attractions": recommendations})
+        return jsonify({"id": user_id, "spot": recommendations})
 
     else:
         recommendation_list = []
         for recommendation in recommendations:
             recommendation_list.append({
-                'name': recommendation.attraction_name,
+                'spot': recommendation.attraction_name,
                 'latitude': recommendation.latitude,
                 'longitude': recommendation.longitude
             })
@@ -95,43 +98,55 @@ def get_country_data():
 @app.route('/getURI', methods=['POST'])
 def get_category_data():
     data = request.get_json()
-    country_name = data.get('countryName')
-    features = data.get('features')  # Change 'feature' to 'features'
+    country_names = data.get('countryName')
+    features = data.get('features')
 
     # data_directory = os.path.join(os.path.dirname(__file__), 'data')
 
-    if country_name == 'Spain':
-        excel_file = './data/스페인(test).xlsx'
-    elif country_name == 'Italy':
-        excel_file = './data/이탈리아(test).xlsx'
-    elif country_name == 'British':
-        # excel_file = os.path.join(data_directory, 'British_Category.xlsx')
-        excel_file = './data/British_Category.xlsx'
-    else:
-        error_message = {"message": "Country not supported."}
-        return jsonify(error_message), 400
+    spot = []
 
-    result = []
-    for feature in features:  # Iterate through the list of features
-        attractions_by_feature = get_attractions_by_feature(feature, excel_file)
+    for country_name in country_names:
+        if country_name == 'Spain':
+            # excel_file = os.path.join(data_directory, 'Spain_Category.xlsx')
+            excel_file = './data/스페인(test).xlsx'
 
-        # Check if the feature exists in the excel file
-        if attractions_by_feature.empty:
-            continue  # Skip to the next feature if the current one is not found
+        elif country_name == 'Italy':
+            excel_file = './data/이탈리아(test).xlsx'
 
-        for index, row in attractions_by_feature.iterrows():
-            result.append({
-                "attraction": row['attraction'],
-                "feature": row['feature'],
-                "URI": row['URI']
-            })
+        elif country_name == 'British':
+            # excel_file = os.path.join(data_directory, 'British_Category.xlsx')
+            excel_file = './data/British_Category.xlsx'
+
+        elif country_name == 'Switzerland':
+            excel_file = './data/Switzerland_Category.xlsx'
+
+        elif country_name == 'France':
+            excel_file = './data/France_Category.xlsx'
+
+        else:
+            continue  # Skip to the next country if the current one is not supported
+
+        for feature in features:  # Iterate through the list of features
+            attractions_by_feature = get_attractions_by_feature(feature, excel_file)
+
+            # Check if the feature exists in the excel file
+            if attractions_by_feature.empty:
+                continue  # Skip to the next feature if the current one is not found
+
+            for index, row in attractions_by_feature.iterrows():
+                spot.append({
+                    "spot": row['attraction'],
+                    "feature": row['feature'],
+                    "URI": row['URI'],
+                    "countryName": country_name
+                })
 
     # Return an error message if no features are found
-    if not result:
+    if not spot:
         error_message = {"message": f"No attractions found for the given features."}
         return jsonify(error_message), 400
 
-    return jsonify({"result": result})
+    return jsonify({"spot": spot})
 
 
 def get_attractions_by_feature(feature, excel_file):
@@ -144,7 +159,7 @@ def save_recommendations(user_id, recommendations):
     for recommendation in recommendations:
         attraction_recommendation = AttractionRecommendation(
             user_id=user_id,
-            attraction_name=recommendation['name'],
+            attraction_name=recommendation['spot'],
             latitude=recommendation['latitude'],
             longitude=recommendation['longitude']
         )
