@@ -108,7 +108,7 @@ def get_category_data():
     for country_name in country_names:
         if country_name == 'Spain':
             # excel_file = os.path.join(data_directory, 'Spain_Category.xlsx')
-            excel_file = './data/스페인(test).xlsx'
+            excel_file = './data/Spain_Category.xlsx'
 
         elif country_name == 'Italy':
             excel_file = './data/이탈리아(test).xlsx'
