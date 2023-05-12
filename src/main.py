@@ -53,6 +53,10 @@ def get_country_data():
             # excel_file = os.path.join(data_directory, 'British.xlsx')
             excel_file = './data/British.xlsx'
 
+        elif country_name == "France":
+            # excel_file = os.path.join(data_directory, 'France.xlsx')
+            excel_file = './data/France.xlsx'
+
         else:
             error_message = {"message": "Country not supported."}
             return jsonify(error_message), 400
@@ -76,12 +80,23 @@ def get_country_data():
         recommendations = []
 
         for attraction, latitude, longitude in knn_recommendations:
-            recommendations.append({"spot": attraction, "latitude": latitude, "longitude": longitude})
+            recommendations.append({
+                "spot": attraction,
+                "latitude": latitude,
+                "longitude": longitude
+            })
 
         # Save recommendations to database
         save_recommendations(user_id, recommendations)
 
-        return jsonify({"id": user_id, "spot": recommendations})
+        # 각 추천에 대해 num_days * 4개의 장소 분할
+        spots = [recommendations[i:i + num_days * 4] for i in range(0, len(recommendations), num_days * 4)]
+
+        result = {}
+        for i, spot in enumerate(spots):
+            result["recommend" + str(i + 1)] = spot
+
+        return jsonify(result)
 
     else:
         recommendation_list = []
@@ -92,7 +107,14 @@ def get_country_data():
                 'longitude': recommendation.longitude
             })
 
-        return jsonify(recommendation_list)
+        # 각 추천에 대해 num_days * 4개의 장소 분할
+        spots = [recommendation_list[i:i + num_days*4] for i in range(0, len(recommendation_list), num_days*4)]
+
+        result = {}
+        for i, spot in enumerate(spots):
+            result["recommend" + str(i + 1)] = spot
+
+        return jsonify(result)
 
 
 @app.route('/getURI', methods=['POST'])
@@ -101,7 +123,7 @@ def get_category_data():
     country_names = data.get('countryName')
     features = data.get('features')
 
-    # data_directory = os.path.join(os.path.dirname(__file__), 'data')
+    data_directory = os.path.join(os.path.dirname(__file__), 'data')
 
     spot = []
 
@@ -121,6 +143,7 @@ def get_category_data():
             excel_file = './data/Switzerland_Category.xlsx'
 
         elif country_name == 'France':
+            # excel_file = os.path.join(data_directory, 'France_Category.xlsx')
             excel_file = './data/France_Category.xlsx'
 
         else:
@@ -202,7 +225,7 @@ class KNNModel:
             closest_users = self.user_item_matrix.iloc[indices.flatten()[1:], :]
 
         mean_ratings = closest_users.mean(axis=0)
-        top_n = num_days * 4
+        top_n = num_days * 4 * 3
         recommended_attractions = mean_ratings.nlargest(top_n).index.tolist()
 
         # 위도와 경도 값을 찾기 위해 데이터프레임으로 변경
