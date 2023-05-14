@@ -49,3 +49,13 @@ jobs:
         docker build -t $REPO .
         docker tag $REPO:latest $NAME/$REPO:latest
         docker push $NAME/$REPO:latest
+
+  deploy:
+    needs: build
+    name: Deploy
+    runs-on: [ self-hosted ]
+    steps:
+      - name: Docker run
+        run: |
+              sudo docker ps -q --filter "name=euro-planner-ai-model" | grep -q . && sudo docker stop "euro-planner-ai-model" && sudo docker rmi  "euics/euro-planner-ai-model"
+              sudo docker run -d --name euro-planner-ai-model --rm -p 5000:5000 euics/euro-planner-ai-model
