@@ -30,6 +30,38 @@ class AttractionRecommendation(db.Model):
     longitude = db.Column(db.String(50), nullable=False)
 
 
+class SpainAttraction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    attraction_name = db.Column(db.String(100), nullable=False)
+    latitude = db.Column(db.String(50), nullable=False)
+    longitude = db.Column(db.String(50), nullable=False)
+
+
+class ItalyAttraction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    attraction_name = db.Column(db.String(100), nullable=False)
+    latitude = db.Column(db.String(50), nullable=False)
+    longitude = db.Column(db.String(50), nullable=False)
+
+
+class BritishAttraction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    attraction_name = db.Column(db.String(100), nullable=False)
+    latitude = db.Column(db.String(50), nullable=False)
+    longitude = db.Column(db.String(50), nullable=False)
+
+
+class FranceAttraction(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, nullable=False)
+    attraction_name = db.Column(db.String(100), nullable=False)
+    latitude = db.Column(db.String(50), nullable=False)
+    longitude = db.Column(db.String(50), nullable=False)
+
+
 @app.route('/country', methods=['POST'])
 def get_country_data():
     data = request.get_json()
@@ -38,9 +70,19 @@ def get_country_data():
     num_days = data.get('days')
     attraction_names = data.get('spot')
 
-    # data_directory = os.path.join(os.path.dirname(__file__), 'data')
+    data_directory = os.path.join(os.path.dirname(__file__), 'data')
 
-    recommendations = AttractionRecommendation.query.filter_by(user_id=user_id).all()
+    if country_name == 'Spain':
+        recommendations = SpainAttraction.query.filter_by(user_id=user_id).all()
+    elif country_name == 'Italy':
+        recommendations = ItalyAttraction.query.filter_by(user_id=user_id).all()
+    elif country_name == 'British':
+        recommendations = BritishAttraction.query.filter_by(user_id=user_id).all()
+    elif country_name == 'France':
+        recommendations = FranceAttraction.query.filter_by(user_id=user_id).all()
+    else:
+        error_message = {"message": "Country not supported."}
+        return jsonify(error_message), 400
 
     if not recommendations:
         if country_name == 'Spain':
@@ -50,12 +92,12 @@ def get_country_data():
             excel_file = './data/이탈리아(test).xlsx'
 
         elif country_name == 'British':
-            # excel_file = os.path.join(data_directory, 'British.xlsx')
-            excel_file = './data/British.xlsx'
+            excel_file = os.path.join(data_directory, 'British.xlsx')
+            # excel_file = './data/British.xlsx'
 
         elif country_name == "France":
-            # excel_file = os.path.join(data_directory, 'France.xlsx')
-            excel_file = './data/France.xlsx'
+            excel_file = os.path.join(data_directory, 'France.xlsx')
+            # excel_file = './data/France.xlsx'
 
         else:
             error_message = {"message": "Country not supported."}
@@ -87,12 +129,12 @@ def get_country_data():
             })
 
         # Save recommendations to database
-        save_recommendations(user_id, recommendations)
+        save_recommendations(user_id, recommendations, country_name)
 
         # 각 추천에 대해 num_days * 4개의 장소 분할
         spots = [recommendations[i:i + num_days * 4] for i in range(0, len(recommendations), num_days * 4)]
 
-        result = {}
+        result = {"id": user_id}
         for i, spot in enumerate(spots):
             result["recommend" + str(i + 1)] = spot
 
@@ -110,7 +152,7 @@ def get_country_data():
         # 각 추천에 대해 num_days * 4개의 장소 분할
         spots = [recommendation_list[i:i + num_days*4] for i in range(0, len(recommendation_list), num_days*4)]
 
-        result = {}
+        result = {"id": user_id}
         for i, spot in enumerate(spots):
             result["recommend" + str(i + 1)] = spot
 
@@ -178,9 +220,22 @@ def get_attractions_by_feature(feature, excel_file):
     return filtered_data[['attraction', 'feature', 'URI']]
 
 
-def save_recommendations(user_id, recommendations):
+def save_recommendations(user_id, recommendations, country):
+    # Determine which model to use based on the country
+    if country == 'Spain':
+        model = SpainAttraction
+    elif country == 'Italy':
+        model = ItalyAttraction
+    elif country == 'British':
+        model = BritishAttraction
+    elif country == 'France':
+        model = FranceAttraction
+    else:
+        raise ValueError(f"Unsupported country: {country}")
+
+    # Save recommendations to the appropriate table
     for recommendation in recommendations:
-        attraction_recommendation = AttractionRecommendation(
+        attraction_recommendation = model(
             user_id=user_id,
             attraction_name=recommendation['spot'],
             latitude=recommendation['latitude'],
