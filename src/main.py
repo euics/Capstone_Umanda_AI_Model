@@ -165,7 +165,7 @@ def get_category_data():
     country_names = data.get('countryName')
     features = data.get('features')
 
-    data_directory = os.path.join(os.path.dirname(__file__), 'data')
+    # data_directory = os.path.join(os.path.dirname(__file__), 'data')
 
     spot = []
 
@@ -191,22 +191,21 @@ def get_category_data():
         else:
             continue  # Skip to the next country if the current one is not supported
 
-        for feature in features:  # Iterate through the list of features
+        for feature in features:
             attractions_by_feature = get_attractions_by_feature(feature, excel_file)
 
-            # Check if the feature exists in the excel file
             if attractions_by_feature.empty:
-                continue  # Skip to the next feature if the current one is not found
+                continue
 
             for index, row in attractions_by_feature.iterrows():
                 spot.append({
                     "spot": row['attraction'],
                     "feature": row['feature'],
                     "URI": row['URI'],
-                    "countryName": country_name
+                    "countryName": country_name,
+                    "description": row['description']  # 'description' 추가
                 })
 
-    # Return an error message if no features are found
     if not spot:
         error_message = {"message": f"No attractions found for the given features."}
         return jsonify(error_message), 400
@@ -217,7 +216,7 @@ def get_category_data():
 def get_attractions_by_feature(feature, excel_file):
     data = pd.read_excel(excel_file)
     filtered_data = data[data['feature'] == feature]
-    return filtered_data[['attraction', 'feature', 'URI']]
+    return filtered_data[['attraction', 'feature', 'URI', 'description']]
 
 
 def save_recommendations(user_id, recommendations, country):
