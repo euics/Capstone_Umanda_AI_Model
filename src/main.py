@@ -175,13 +175,15 @@ def get_category_data():
             excel_file = './data/Spain_Category.xlsx'
 
         elif country_name == 'Italy':
-            excel_file = './data/이탈리아(test).xlsx'
+            # excel_file = os.path.join(data_directory, 'Italy_Category.xlsx')
+            excel_file = './data/Italy_Category.xlsx'
 
         elif country_name == 'British':
             # excel_file = os.path.join(data_directory, 'British_Category.xlsx')
             excel_file = './data/British_Category.xlsx'
 
         elif country_name == 'Switzerland':
+            # excel_file = os.path.join(data_directory, 'Switzerland_Category.xlsx')
             excel_file = './data/Switzerland_Category.xlsx'
 
         elif country_name == 'France':
