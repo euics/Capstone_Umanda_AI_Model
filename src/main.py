@@ -28,6 +28,8 @@ class AttractionRecommendation(db.Model):
     attraction_name = db.Column(db.String(100), nullable=False)
     latitude = db.Column(db.String(50), nullable=False)
     longitude = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(100), nullable=False)
+    URI = db.Column(db.String(100), nullable=False)
 
 
 class SpainAttraction(db.Model):
@@ -36,6 +38,8 @@ class SpainAttraction(db.Model):
     attraction_name = db.Column(db.String(100), nullable=False)
     latitude = db.Column(db.String(50), nullable=False)
     longitude = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(100), nullable=False)
+    URI = db.Column(db.String(100), nullable=False)
 
 
 class ItalyAttraction(db.Model):
@@ -44,6 +48,8 @@ class ItalyAttraction(db.Model):
     attraction_name = db.Column(db.String(100), nullable=False)
     latitude = db.Column(db.String(50), nullable=False)
     longitude = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(100), nullable=False)
+    URI = db.Column(db.String(100), nullable=False)
 
 
 class BritishAttraction(db.Model):
@@ -52,6 +58,8 @@ class BritishAttraction(db.Model):
     attraction_name = db.Column(db.String(100), nullable=False)
     latitude = db.Column(db.String(50), nullable=False)
     longitude = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(100), nullable=False)
+    URI = db.Column(db.String(100), nullable=False)
 
 
 class FranceAttraction(db.Model):
@@ -60,6 +68,8 @@ class FranceAttraction(db.Model):
     attraction_name = db.Column(db.String(100), nullable=False)
     latitude = db.Column(db.String(50), nullable=False)
     longitude = db.Column(db.String(50), nullable=False)
+    description = db.Column(db.String(100), nullable=False)
+    URI = db.Column(db.String(100), nullable=False)
 
 
 @app.route('/country', methods=['POST'])
@@ -109,7 +119,7 @@ def get_country_data():
         np.random.seed(seed)
 
         rating = pd.read_excel(excel_file)
-        rating_with_category = rating[['user', 'attraction', 'rating', 'feature', 'latitude', 'longitude']]
+        rating_with_category = rating[['user', 'attraction', 'rating', 'feature', 'latitude', 'longitude', 'description', 'URI']]
         user_item_matrix = rating_with_category.pivot_table("rating", "user", "attraction").fillna(0)
         categories = pd.get_dummies(rating_with_category['feature'], prefix='feature')
 
@@ -121,11 +131,13 @@ def get_country_data():
 
         recommendations = []
 
-        for attraction, latitude, longitude in knn_recommendations:
+        for attraction, latitude, longitude, description, URI in knn_recommendations:
             recommendations.append({
                 "spot": attraction,
                 "latitude": latitude,
-                "longitude": longitude
+                "longitude": longitude,
+                "description": description,
+                "URI": URI
             })
 
         # Save recommendations to database
@@ -146,15 +158,16 @@ def get_country_data():
             recommendation_list.append({
                 'spot': recommendation.attraction_name,
                 'latitude': recommendation.latitude,
-                'longitude': recommendation.longitude
+                'longitude': recommendation.longitude,
+                'description': recommendation.description,
+                'URI': recommendation.URI
             })
-
         # 각 추천에 대해 num_days * 4개의 장소 분할
         spots = [recommendation_list[i:i + num_days*4] for i in range(0, len(recommendation_list), num_days*4)]
 
-        result = {"id": user_id}
+        result = {"id": user_id, "countryName": country_name}
         for i, spot in enumerate(spots):
-            result["recommend" + str(i + 1)] = spot
+            result["recommend" + str(i + 1)] = {"spot": spot}
 
         return jsonify(result)
 
@@ -252,13 +265,16 @@ def save_recommendations(user_id, recommendations, country):
 
     # Save recommendations to the appropriate table
     for recommendation in recommendations:
-        attraction_recommendation = model(
+        attraction = model(
             user_id=user_id,
             attraction_name=recommendation['spot'],
             latitude=recommendation['latitude'],
-            longitude=recommendation['longitude']
+            longitude=recommendation['longitude'],
+            description=recommendation['description'],
+            URI=recommendation['URI']
         )
-        db.session.add(attraction_recommendation)
+        db.session.add(attraction)
+
     db.session.commit()
 
 
@@ -301,10 +317,10 @@ class KNNModel:
         recommended_attractions = mean_ratings.nlargest(top_n).index.tolist()
 
         # 위도와 경도 값을 찾기 위해 데이터프레임으로 변경
-        attraction_location = self.rating_with_category[['attraction', 'latitude', 'longitude']].drop_duplicates()
+        attraction_location = self.rating_with_category[['attraction', 'latitude', 'longitude', 'description', 'URI']].drop_duplicates()
         recommended_locations = attraction_location[attraction_location['attraction'].isin(recommended_attractions)]
 
-        return list(zip(recommended_attractions[:top_n], recommended_locations['latitude'], recommended_locations['longitude']))
+        return [(row['attraction'], row['latitude'], row['longitude'], row['description'], row['URI']) for index, row in recommended_locations.iterrows()]
 
 
 def get_user_input(user_id, attraction_names):
