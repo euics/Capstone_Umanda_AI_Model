@@ -215,6 +215,19 @@ def get_category_data():
     return jsonify({"spot": spot})
 
 
+@app.route('/restaurant', methods=['GET'])
+def get_restaurant_data():
+    data_directory = os.path.join(os.path.dirname(__file__), 'data')
+
+    excel_file = os.path.join(data_directory, 'Restaurant.xlsx')
+
+    # Excel 파일을 읽어들여 DataFrame으로 변환
+    df = pd.read_excel(excel_file)
+
+    # DataFrame을 dictionary로 변환하고, 이를 JSON으로 반환
+    data = df.to_dict(orient='records')
+    return jsonify(data)
+
 def get_attractions_by_feature(feature, excel_file):
     data = pd.read_excel(excel_file)
     filtered_data = data[data['feature'] == feature]
