@@ -224,6 +224,9 @@ def get_restaurant_data():
     # Excel 파일을 읽어들여 DataFrame으로 변환
     df = pd.read_excel(excel_file)
 
+    # Remove rows with NaN values
+    df = df.dropna()
+
     # DataFrame을 dictionary로 변환하고, 이를 JSON으로 반환
     data = df.to_dict(orient='records')
     return jsonify(data)
