@@ -134,7 +134,7 @@ def get_country_data():
         # 각 추천에 대해 num_days * 4개의 장소 분할
         spots = [recommendations[i:i + num_days * 4] for i in range(0, len(recommendations), num_days * 4)]
 
-        result = {"id": user_id}
+        result = {"id": user_id, "countryName": country_name}
         for i, spot in enumerate(spots):
             result["recommend" + str(i + 1)] = spot
 
