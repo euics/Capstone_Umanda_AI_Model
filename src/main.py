@@ -217,11 +217,11 @@ def get_category_data():
 
 @app.route('/restaurant', methods=['GET'])
 def get_restaurant_data():
-    data_directory = os.path.join(os.path.dirname(__file__), 'data')
-
-    excel_file = os.path.join(data_directory, 'Restaurant.xlsx')
+    # data_directory = os.path.join(os.path.dirname(__file__), 'data')
 
     # Excel 파일을 읽어들여 DataFrame으로 변환
+    # excel_file = os.path.join(data_directory, 'Restaurant.xlsx')
+    excel_file = './data/Restaurant.xlsx'
     df = pd.read_excel(excel_file)
 
     # Remove rows with NaN values
