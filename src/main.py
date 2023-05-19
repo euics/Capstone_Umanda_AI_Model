@@ -96,7 +96,8 @@ def get_country_data():
 
     if not recommendations:
         if country_name == 'Spain':
-            excel_file = './data/스페인(test).xlsx'
+            # excel_file = os.path.join(data_directory, 'British.xlsx')
+            excel_file = './data/Spain.xlsx'
 
         elif country_name == 'Italy':
             excel_file = './data/이탈리아(test).xlsx'
