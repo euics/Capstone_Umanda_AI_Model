@@ -80,7 +80,7 @@ def get_country_data():
     num_days = data.get('days')
     attraction_names = data.get('spot')
 
-    # data_directory = os.path.join(os.path.dirname(__file__), 'data')
+    data_directory = os.path.join(os.path.dirname(__file__), 'data')
 
     if country_name == 'Spain':
         recommendations = SpainAttraction.query.filter_by(user_id=user_id).all()
@@ -103,8 +103,8 @@ def get_country_data():
             excel_file = './data/이탈리아(test).xlsx'
 
         elif country_name == 'British':
-            # excel_file = os.path.join(data_directory, 'British.xlsx')
-            excel_file = './data/British.xlsx'
+            excel_file = os.path.join(data_directory, 'British.xlsx')
+            # excel_file = './data/British.xlsx'
 
         elif country_name == "France":
             # excel_file = os.path.join(data_directory, 'France.xlsx')
@@ -148,8 +148,22 @@ def get_country_data():
         spots = [recommendations[i:i + num_days * 4] for i in range(0, len(recommendations), num_days * 4)]
 
         result = {"id": user_id, "countryName": country_name}
+        spot_dicts = []
         for i, spot in enumerate(spots):
-            result["recommend" + str(i + 1)] = spot
+            spot_dict = {"spot": spot}
+            spot_dicts.append(spot_dict)
+
+        # Swapping "recommend1" and "recommend2" and making "recommend2" and "recommend3" random if there are at least three recommendations
+        if len(spot_dicts) >= 3:
+            # Swap "recommend1" and "recommend2"
+            spot_dicts[0], spot_dicts[1] = spot_dicts[1], spot_dicts[0]
+            # Randomly choose an index for "recommend3"
+            random_index = random.choice(range(2, len(spot_dicts)))
+            # Make "recommend2" and "recommend3" random
+            spot_dicts[1], spot_dicts[random_index] = spot_dicts[random_index], spot_dicts[1]
+
+        for i, spot_dict in enumerate(spot_dicts):
+            result["recommend" + str(i + 1)] = spot_dict
 
         return jsonify(result)
 
@@ -167,8 +181,22 @@ def get_country_data():
         spots = [recommendation_list[i:i + num_days*4] for i in range(0, len(recommendation_list), num_days*4)]
 
         result = {"id": user_id, "countryName": country_name}
+        spot_dicts = []
         for i, spot in enumerate(spots):
-            result["recommend" + str(i + 1)] = {"spot": spot}
+            spot_dict = {"spot": spot}
+            spot_dicts.append(spot_dict)
+
+        # Swapping "recommend1" and "recommend2" and making "recommend2" and "recommend3" random if there are at least three recommendations
+        if len(spot_dicts) >= 3:
+            # Swap "recommend1" and "recommend2"
+            spot_dicts[0], spot_dicts[1] = spot_dicts[1], spot_dicts[0]
+            # Randomly choose an index for "recommend3"
+            random_index = random.choice(range(2, len(spot_dicts)))
+            # Make "recommend2" and "recommend3" random
+            spot_dicts[1], spot_dicts[random_index] = spot_dicts[random_index], spot_dicts[1]
+
+        for i, spot_dict in enumerate(spot_dicts):
+            result["recommend" + str(i + 1)] = spot_dict
 
         return jsonify(result)
 
