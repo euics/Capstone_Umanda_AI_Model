@@ -80,7 +80,7 @@ def get_country_data():
     num_days = data.get('days')
     attraction_names = data.get('spot')
 
-    data_directory = os.path.join(os.path.dirname(__file__), 'data')
+    # data_directory = os.path.join(os.path.dirname(__file__), 'data')
 
     if country_name == 'Spain':
         recommendations = SpainAttraction.query.filter_by(user_id=user_id).all()
@@ -103,8 +103,8 @@ def get_country_data():
             excel_file = './data/이탈리아(test).xlsx'
 
         elif country_name == 'British':
-            excel_file = os.path.join(data_directory, 'British.xlsx')
-            # excel_file = './data/British.xlsx'
+            # excel_file = os.path.join(data_directory, 'British.xlsx')
+            excel_file = './data/British.xlsx'
 
         elif country_name == "France":
             # excel_file = os.path.join(data_directory, 'France.xlsx')
