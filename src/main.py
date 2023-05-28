@@ -80,7 +80,7 @@ def get_country_data():
     num_days = data.get('days')
     attraction_names = data.get('spot')
 
-    data_directory = os.path.join(os.path.dirname(__file__), 'data')
+    # data_directory = os.path.join(os.path.dirname(__file__), 'data')
 
     if country_name == 'Spain':
         recommendations = SpainAttraction.query.filter_by(user_id=user_id).all()
@@ -103,8 +103,8 @@ def get_country_data():
             excel_file = './data/이탈리아(test).xlsx'
 
         elif country_name == 'British':
-            excel_file = os.path.join(data_directory, 'British.xlsx')
-            # excel_file = './data/British.xlsx'
+            # excel_file = os.path.join(data_directory, 'British.xlsx')
+            excel_file = './data/British.xlsx'
 
         elif country_name == "France":
             # excel_file = os.path.join(data_directory, 'France.xlsx')
@@ -118,19 +118,15 @@ def get_country_data():
         torch.manual_seed(seed)
         random.seed(seed)
         np.random.seed(seed)
-
         rating = pd.read_excel(excel_file)
         rating_with_category = rating[['user', 'attraction', 'rating', 'feature', 'latitude', 'longitude', 'description', 'URI']]
         user_item_matrix = rating_with_category.pivot_table("rating", "user", "attraction").fillna(0)
         categories = pd.get_dummies(rating_with_category['feature'], prefix='feature')
-
         knn = KNNModel(user_item_matrix, rating_with_category)
-
         new_user_ratings = get_user_input(user_id, attraction_names)
-
         knn_recommendations = knn.recommend(user_id, num_days, new_user_ratings=new_user_ratings)
-
         recommendations = []
+
 
         for attraction, latitude, longitude, description, URI in knn_recommendations:
             recommendations.append({
@@ -140,25 +136,13 @@ def get_country_data():
                 "description": description,
                 "URI": URI
             })
-
+        # Save recommendations to database
         save_recommendations(user_id, recommendations, country_name)
-
-        spots = [recommendations[i] for i in range(0, len(recommendations), num_days * 4)]
-
+        # 각 추천에 대해 num_days * 4개의 장소 분할
+        spots = [recommendations[i:i + num_days * 4] for i in range(0, len(recommendations), num_days * 4)]
         result = {"id": user_id, "countryName": country_name}
-        spot_dicts = []
         for i, spot in enumerate(spots):
-            spot_dict = {"spot": spot}
-            spot_dicts.append(spot_dict)
-
-        if len(spot_dicts) >= 3:
-            spot_dicts[0], spot_dicts[1] = spot_dicts[1], spot_dicts[0]
-            random_index = random.choice(range(2, len(spot_dicts)))
-            spot_dicts[1], spot_dicts[random_index] = spot_dicts[random_index], spot_dicts[1]
-
-        for i, spot_dict in enumerate(spot_dicts):
-            result["recommend" + str(i + 1)] = spot_dict
-
+            result["recommend" + str(i + 1)] = spot
         return jsonify(result)
 
 
@@ -172,23 +156,11 @@ def get_country_data():
                 'description': recommendation.description,
                 'URI': recommendation.URI
             })
-
-        spots = [recommendation_list[i] for i in range(0, len(recommendation_list), num_days*4)]
-
+        # 각 추천에 대해 num_days * 4개의 장소 분할
+        spots = [recommendation_list[i:i + num_days*4] for i in range(0, len(recommendation_list), num_days*4)]
         result = {"id": user_id, "countryName": country_name}
-        spot_dicts = []
         for i, spot in enumerate(spots):
-            spot_dict = {"spot": spot}
-            spot_dicts.append(spot_dict)
-
-        if len(spot_dicts) >= 3:
-            spot_dicts[0], spot_dicts[1] = spot_dicts[1], spot_dicts[0]
-            random_index = random.choice(range(2, len(spot_dicts)))
-            spot_dicts[1], spot_dicts[random_index] = spot_dicts[random_index], spot_dicts[1]
-
-        for i, spot_dict in enumerate(spot_dicts):
-            result["recommend" + str(i + 1)] = spot_dict
-
+            result["recommend" + str(i + 1)] = {"spot": spot}
         return jsonify(result)
 
 
